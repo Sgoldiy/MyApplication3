@@ -33,7 +33,8 @@ class NotesViewModel(private val repository: NotesRepository) : ViewModel() {
                 color = color,
                 reminderTime = reminderTime,
                 createdAt = 0L,
-                updatedAt = 0L
+                updatedAt = 0L,
+                isCompleted = false
             )
             repository.addNote(note)
             reminderTime?.let {
@@ -43,7 +44,7 @@ class NotesViewModel(private val repository: NotesRepository) : ViewModel() {
         }
     }
 
-    fun updateNote(id: String, title: String, content: String, color: Long, reminderTime: Long?) {
+    fun updateNote(id: String, title: String, content: String, color: Long, reminderTime: Long?, isCompleted: Boolean? = null) {
         viewModelScope.launch {
             val existing = repository.getNoteById(id)
             if (existing != null) {
@@ -52,7 +53,8 @@ class NotesViewModel(private val repository: NotesRepository) : ViewModel() {
                     content = content,
                     color = color,
                     reminderTime = reminderTime,
-                    updatedAt = 0L
+                    updatedAt = 0L,
+                    isCompleted = isCompleted ?: existing.isCompleted
                 )
                 repository.updateNote(updated)
                 reminderTime?.let {
@@ -60,6 +62,14 @@ class NotesViewModel(private val repository: NotesRepository) : ViewModel() {
                 }
                 loadNotes()
             }
+        }
+    }
+
+    fun toggleNoteCompletion(note: Note) {
+        viewModelScope.launch {
+            val updated = note.copy(isCompleted = !note.isCompleted)
+            repository.updateNote(updated)
+            loadNotes()
         }
     }
 

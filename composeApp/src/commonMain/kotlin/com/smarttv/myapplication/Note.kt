@@ -4,8 +4,9 @@ data class Note(
     val id: String,
     val title: String,
     val content: String,
-    val color: Long, // Color as Long for multiplatform
-    val reminderTime: Long?, // New field for reminder
+    val color: Long,
+    val reminderTime: Long?,
     val createdAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val isCompleted: Boolean = false
 )

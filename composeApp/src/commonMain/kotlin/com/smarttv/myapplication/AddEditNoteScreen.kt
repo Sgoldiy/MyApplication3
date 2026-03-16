@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.datetime.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddEditNoteScreen(navController: NavController, viewModel: NotesViewModel) {
     val currentNote by viewModel.currentNote.collectAsState()
@@ -78,68 +80,87 @@ fun AddEditNoteScreen(navController: NavController, viewModel: NotesViewModel) {
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Box(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            OutlinedTextField(
-                value = title,
-                onValueChange = { title = it },
-                label = { Text("Title") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = content,
-                onValueChange = { content = it },
-                label = { Text("Content") },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                maxLines = Int.MAX_VALUE
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = hasReminder, onCheckedChange = { hasReminder = it })
-                Text("Set Reminder")
-            }
-            if (hasReminder) {
-                Button(onClick = { showDatePicker = true }) {
-                    Text("Select Date")
-                }
-                Button(onClick = { showTimePicker = true }) {
-                    Text("Select Time")
-                }
-                reminderTime?.let {
-                    val instant = Instant.fromEpochMilliseconds(it)
-                    val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
-                    Text("Reminder: ${localDateTime.date} ${localDateTime.time}")
-                }
-            }
-            Text("Choose Color:")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .widthIn(max = 800.dp) // Constrain width for better readability on web
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                colors.forEach { color ->
-                    val isSelected = selectedColor == color
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .background(Color(color), RoundedCornerShape(4.dp))
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) Color.Black else Color.Transparent,
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .clickable { selectedColor = color }
-                    )
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    label = { Text("Content") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp),
+                    maxLines = Int.MAX_VALUE
+                )
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = hasReminder, onCheckedChange = { hasReminder = it })
+                            Text("Set Reminder")
+                        }
+                        if (hasReminder) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(onClick = { showDatePicker = true }) {
+                                    Text("Date")
+                                }
+                                Button(onClick = { showTimePicker = true }) {
+                                    Text("Time")
+                                }
+                            }
+                            reminderTime?.let {
+                                val instant = Instant.fromEpochMilliseconds(it)
+                                val localDateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
+                                Text("Set for: ${localDateTime.date} ${localDateTime.time}", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+
+                Text("Background Color:", style = MaterialTheme.typography.titleMedium)
+                FlowRow( // Better for many small items
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    colors.forEach { color ->
+                        val isSelected = selectedColor == color
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(Color(color), RoundedCornerShape(8.dp))
+                                .border(
+                                    width = if (isSelected) 3.dp else 1.dp,
+                                    color = if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .clickable { selectedColor = color }
+                        )
+                    }
                 }
             }
         }
     }
 
+    // Dialogs remain the same...
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
